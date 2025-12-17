@@ -1,4 +1,3 @@
-// File: src/app/api/products/route.ts
 import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
@@ -17,7 +16,8 @@ export async function GET(req: Request) {
 
     const data = await resBackend.json();
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
+    // Đã xóa biến error vì không dùng đến
     return NextResponse.json({ data: [] }, { status: 500 });
   }
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PRODUCTS } from "@/mock/products";
 import { calcTotals } from "@/lib/checkout";
 import { getProductBySlug } from "@/services/products";
 import { createOrder } from "@/services/orders";
 import { formatVND } from "@/app/lib/format";
-import Image from "next/image"; // 👇 SỬA 1: Dùng Image của Next.js
+import Image from "next/image";
 
 type PM = "cod" | "banking" | "momo";
 
-export default function CheckoutPage() {
+// Tách toàn bộ logic vào component con
+function CheckoutContent() {
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -51,11 +52,8 @@ export default function CheckoutPage() {
   const [addr, setAddr] = useState("");
   const [pm, setPM] = useState<PM>("cod");
   const [note, setNote] = useState("");
-  
-  // 👇 SỬA 2: Sử dụng biến submitting ở nút bấm bên dưới
   const [submitting, setSubmitting] = useState(false);
   
-  // 👇 SỬA 3: Bỏ any, dùng kiểu cụ thể cho result
   const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,9 +87,8 @@ export default function CheckoutPage() {
       };
 
       const j = await createOrder(payload);
-      setResult({ id: j.order._id, status: j.order.status || "pending" }); // Map dữ liệu trả về
+      setResult({ id: j.order._id, status: j.order.status || "pending" });
     } catch (err: unknown) {
-       // 👇 SỬA 4: Catch unknown error thay vì any
       const msg = err instanceof Error ? err.message : "Có lỗi xảy ra";
       setError(msg);
     } finally {
@@ -123,7 +120,6 @@ export default function CheckoutPage() {
               {parsed.map((x) => (
                 <li key={x.slug} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {/* 👇 SỬA 5: Thay thẻ img bằng Image của Next.js */}
                     <Image
                       src={x.product.images?.[0] || "/placeholder.png"}
                       alt={x.product.title}
@@ -235,7 +231,7 @@ export default function CheckoutPage() {
           <div className="flex gap-3">
             <button
               type="submit"
-              disabled={submitting} // 👇 Dùng biến submitting ở đây để disable nút
+              disabled={submitting}
               className="h-10 px-4 rounded-md border bg-black text-white disabled:opacity-50"
             >
               {submitting ? "Đang xử lý..." : "Đặt hàng"}
@@ -286,5 +282,14 @@ export default function CheckoutPage() {
         </p>
       </aside>
     </section>
+  );
+}
+
+// Component chính export ra ngoài
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center">Đang tải trang thanh toán...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

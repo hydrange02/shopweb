@@ -1,13 +1,13 @@
 "use client";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import ProductCard from "@/app/components/ProductCard";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
-import { PRODUCTS } from "@/mock/products";
+// Đã xóa import PRODUCTS thừa ở đây
 
 const LIMIT = 12;
 
-export default function ShopPage() {
+function ShopContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,7 +37,7 @@ export default function ShopPage() {
   }
 
   return (
-    <main className="py-8">
+    <>
       <h1 className="text-2xl font-semibold">Shop</h1>
 
       {/* Search */}
@@ -103,6 +103,16 @@ export default function ShopPage() {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <main className="py-8">
+      <Suspense fallback={<div className="py-20 text-center">Đang tải danh sách sản phẩm...</div>}>
+        <ShopContent />
+      </Suspense>
     </main>
   );
 }

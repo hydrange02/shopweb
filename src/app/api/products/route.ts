@@ -1,26 +1,23 @@
+// File: src/app/api/products/route.ts
 import { NextResponse } from "next/server";
-import { PRODUCTS } from "@/mock/products";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
-  const limit = Math.max(parseInt(searchParams.get("limit") || "12", 10), 1);
-  const q = (searchParams.get("q") || "").trim().toLowerCase();
+  try {
+    const { searchParams } = new URL(req.url);
+    // Chuyển tiếp toàn bộ query params (page, limit, q) sang Backend
+    const resBackend = await fetch(`${BACKEND_URL}/api/v1/products?${searchParams.toString()}`, {
+      cache: "no-store" 
+    });
+    
+    if (!resBackend.ok) {
+      return NextResponse.json({ data: [] }, { status: resBackend.status });
+    }
 
-  let list = PRODUCTS;
-  if (q) {
-    list = list.filter((p) =>
-      p.title.toLowerCase().includes(q) ||
-      (p.brand?.toLowerCase().includes(q) ?? false) ||
-      (p.category?.toLowerCase().includes(q) ?? false)
-    );
+    const data = await resBackend.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ data: [] }, { status: 500 });
   }
-
-  const total = list.length;
-  const start = (page - 1) * limit;
-  const end = start + limit;
-  const data = list.slice(start, end);
-  const hasNext = end < total;
-
-  return NextResponse.json({ data, page, limit, total, hasNext });
 }

@@ -6,19 +6,15 @@ import { PRODUCTS } from "@/mock/products";
 import { calcTotals } from "@/lib/checkout";
 import { getProductBySlug } from "@/services/products";
 import { createOrder } from "@/services/orders";
+import { formatVND } from "@/app/lib/format";
+import Image from "next/image"; // 👇 SỬA 1: Dùng Image của Next.js
 
 type PM = "cod" | "banking" | "momo";
-
-// Fallback format nếu bạn chưa có helper formatVND
-function formatVND(n: number) {
-  return n.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
-}
 
 export default function CheckoutPage() {
   const sp = useSearchParams();
   const router = useRouter();
 
-  // Đọc items từ URL: ?items=slug1:2,slug2:1
   const itemsParam = sp.get("items") || "";
   const parsed = useMemo(() => {
     const list = itemsParam
@@ -29,7 +25,7 @@ export default function CheckoutPage() {
         const [slug, qty] = pair.split(":");
         return { slug, quantity: Math.max(parseInt(qty || "1", 10), 1) };
       });
-    // map sang sản phẩm mock
+    
     const enriched = list
       .map((it) => {
         const p = PRODUCTS.find((x) => x.slug === it.slug);
@@ -50,14 +46,17 @@ export default function CheckoutPage() {
     );
   }, [parsed]);
 
-  // Form state (tối giản)
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [addr, setAddr] = useState("");
   const [pm, setPM] = useState<PM>("cod");
   const [note, setNote] = useState("");
+  
+  // 👇 SỬA 2: Sử dụng biến submitting ở nút bấm bên dưới
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  
+  // 👇 SỬA 3: Bỏ any, dùng kiểu cụ thể cho result
+  const [result, setResult] = useState<{ id: string; status: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -75,7 +74,7 @@ export default function CheckoutPage() {
     try {
       const items = await Promise.all(
         parsed.map(async (x) => {
-          const beProduct = await getProductBySlug(x.product.slug); // "san-pham-1"
+          const beProduct = await getProductBySlug(x.product.slug);
           return { productId: beProduct._id, quantity: x.quantity };
         })
       );
@@ -90,18 +89,20 @@ export default function CheckoutPage() {
       };
 
       const j = await createOrder(payload);
-      setResult(j.order);
-    } catch (err: any) {
-      setError(err.message);
+      setResult({ id: j.order._id, status: j.order.status || "pending" }); // Map dữ liệu trả về
+    } catch (err: unknown) {
+       // 👇 SỬA 4: Catch unknown error thay vì any
+      const msg = err instanceof Error ? err.message : "Có lỗi xảy ra";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <section className="grid md:grid-cols-3 gap-6">
+    <section className="grid md:grid-cols-3 gap-6 py-8">
       <div className="md:col-span-2">
-        <h1 className="text-2xl font-semibold mb-4">Thanh toán (giả lập)</h1>
+        <h1 className="text-2xl font-semibold mb-4">Thanh toán</h1>
 
         {/* Tóm tắt giỏ hàng */}
         <div className="mb-6 border rounded-xl p-4">
@@ -122,10 +123,13 @@ export default function CheckoutPage() {
               {parsed.map((x) => (
                 <li key={x.slug} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img
+                    {/* 👇 SỬA 5: Thay thẻ img bằng Image của Next.js */}
+                    <Image
                       src={x.product.images?.[0] || "/placeholder.png"}
                       alt={x.product.title}
-                      className="w-12 h-12 rounded-md object-cover"
+                      width={48}
+                      height={48}
+                      className="rounded-md object-cover"
                     />
                     <div>
                       <p className="font-medium">{x.product.title}</p>
@@ -153,6 +157,7 @@ export default function CheckoutPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nguyễn Văn A"
+              disabled={submitting}
             />
           </div>
           <div>
@@ -162,6 +167,7 @@ export default function CheckoutPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="090..."
+              disabled={submitting}
             />
           </div>
           <div>
@@ -171,6 +177,7 @@ export default function CheckoutPage() {
               value={addr}
               onChange={(e) => setAddr(e.target.value)}
               placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
+              disabled={submitting}
             />
           </div>
 
@@ -184,6 +191,7 @@ export default function CheckoutPage() {
                   value="cod"
                   checked={pm === "cod"}
                   onChange={() => setPM("cod")}
+                  disabled={submitting}
                 />
                 <span>COD</span>
               </label>
@@ -194,6 +202,7 @@ export default function CheckoutPage() {
                   value="banking"
                   checked={pm === "banking"}
                   onChange={() => setPM("banking")}
+                  disabled={submitting}
                 />
                 <span>Banking</span>
               </label>
@@ -204,6 +213,7 @@ export default function CheckoutPage() {
                   value="momo"
                   checked={pm === "momo"}
                   onChange={() => setPM("momo")}
+                  disabled={submitting}
                 />
                 <span>MoMo</span>
               </label>
@@ -216,6 +226,7 @@ export default function CheckoutPage() {
               className="w-full border rounded-md p-2"
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              disabled={submitting}
             />
           </div>
 
@@ -224,14 +235,16 @@ export default function CheckoutPage() {
           <div className="flex gap-3">
             <button
               type="submit"
-              className="h-10 px-4 rounded-md border bg-black text-white"
+              disabled={submitting} // 👇 Dùng biến submitting ở đây để disable nút
+              className="h-10 px-4 rounded-md border bg-black text-white disabled:opacity-50"
             >
-              Đặt hàng
+              {submitting ? "Đang xử lý..." : "Đặt hàng"}
             </button>
             <button
               type="button"
               className="h-10 px-4 rounded-md border"
               onClick={() => router.push("/cart")}
+              disabled={submitting}
             >
               Quay lại giỏ hàng
             </button>
@@ -241,7 +254,7 @@ export default function CheckoutPage() {
         {/* Kết quả */}
         {result && (
           <div className="mt-6 border rounded-xl p-4 bg-green-50">
-            <h2 className="font-medium mb-2">Đặt hàng thành công (giả lập)</h2>
+            <h2 className="font-medium mb-2">Đặt hàng thành công</h2>
             <p className="text-sm">
               Mã đơn: <b>{result.id}</b>
             </p>

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import type { Order } from "@/types/order"; // Nhớ import type này
 
 export type CreateOrderInput = {
   customerName: string;
@@ -10,7 +11,8 @@ export type CreateOrderInput = {
 };
 
 export function createOrder(input: CreateOrderInput) {
-  return apiFetch<{ ok: boolean; order: any }>("/api/v1/orders", {
+  // 👇 SỬA LỖI Ở ĐÂY: Thay order: any bằng order: Order
+  return apiFetch<{ ok: boolean; order: Order }>("/api/v1/orders", {
     method: "POST",
     body: JSON.stringify(input),
   });

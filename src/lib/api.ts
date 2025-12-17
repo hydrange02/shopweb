@@ -15,7 +15,12 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const res = await fetch(url, { ...options, headers, cache: "no-store" });
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
-    try { const j = await res.json(); message = (j as any)?.error?.message || message; } catch {}
+    try { 
+      // 👇 SỬA LỖI Ở ĐÂY: Thay (j as any) bằng kiểu cụ thể
+      const j = await res.json(); 
+      const errorObj = j as { error?: { message?: string } };
+      message = errorObj?.error?.message || message; 
+    } catch {}
     throw new Error(message);
   }
   return res.json() as Promise<T>;

@@ -1,13 +1,12 @@
-// File: src/app/api/products/[slug]/route.ts
 import { NextResponse } from "next/server";
 import { PRODUCTS } from "@/mock/products";
 
-// Định nghĩa params là Promise
+// Sửa kiểu params thành Promise
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  // Phải await params trước khi dùng
+  // Bắt buộc phải await params trước khi dùng
   const { slug } = await params;
 
   const product = PRODUCTS.find((p) => p.slug === slug);

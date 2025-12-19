@@ -1,22 +1,23 @@
+// Sửa toàn bộ file src/types/cart.ts
 import type { Product } from "@/types/product";
 
-
 export type CartItem = {
-  productId: string; // dùng _id của Product
+  productId: string;
   slug: string;
   title: string;
   price: number;
   image?: string;
-  quantity: number; // >= 1
+  quantity: number;
   stock?: number;
+  selectedSize?: string; // 🔥 Thêm thuộc tính này
 };
 
 export type CartState = { items: CartItem[] };
 
 export type CartAction =
   | { type: "ADD"; payload: CartItem }
-  | { type: "REMOVE"; payload: { productId: string } }
-  | { type: "SET_QTY"; payload: { productId: string; quantity: number } }
+  | { type: "REMOVE"; payload: { productId: string; selectedSize?: string } } // Cập nhật để xoá đúng size
+  | { type: "SET_QTY"; payload: { productId: string; selectedSize?: string; quantity: number } }
   | { type: "CLEAR" };
 
 export function productToCartItem(p: Product, quantity = 1): CartItem {

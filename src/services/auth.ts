@@ -19,3 +19,17 @@ export function login(input: LoginInput) {
     body: JSON.stringify(input),
   });
 }
+
+export function requestForgotPass(email: string) {
+  return apiFetch("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(data: any) {
+  return apiFetch("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}

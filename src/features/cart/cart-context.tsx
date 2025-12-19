@@ -4,24 +4,31 @@ import type { CartAction, CartState } from "@/types/cart";
 
 const LS_KEY = "shoply:cart";
 
+// Sửa đoạn function reducer trong src/features/cart/cart-context.tsx
 function reducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD": {
-      const idx = state.items.findIndex((it) => it.productId === action.payload.productId);
+      // Tìm sản phẩm trùng cả ID và Size
+      const idx = state.items.findIndex(
+        (it) => it.productId === action.payload.productId && it.selectedSize === action.payload.selectedSize
+      );
       if (idx >= 0) {
         const next = [...state.items];
-        const cur = next[idx];
-        next[idx] = { ...cur, quantity: cur.quantity + action.payload.quantity };
+        next[idx] = { ...next[idx], quantity: next[idx].quantity + action.payload.quantity };
         return { items: next };
       }
       return { items: [...state.items, action.payload] };
     }
     case "REMOVE":
-      return { items: state.items.filter((it) => it.productId !== action.payload.productId) };
+      return { 
+        items: state.items.filter(
+          (it) => !(it.productId === action.payload.productId && it.selectedSize === action.payload.selectedSize)
+        ) 
+      };
     case "SET_QTY":
       return {
         items: state.items.map((it) =>
-          it.productId === action.payload.productId
+          it.productId === action.payload.productId && it.selectedSize === action.payload.selectedSize
             ? { ...it, quantity: Math.max(1, action.payload.quantity) }
             : it
         ),
@@ -31,7 +38,7 @@ function reducer(state: CartState, action: CartAction): CartState {
     default:
       return state;
   }
-}
+} 
 
 function loadInitial(): CartState {
   if (typeof window === "undefined") return { items: [] };

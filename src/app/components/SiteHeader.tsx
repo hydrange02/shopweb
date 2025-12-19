@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/app/lib/cn";
 import CartIndicator from "@/app/components/CartIndicator";
-import { Search, User, Menu, LogOut, Settings } from "lucide-react";
+import { Search, User, LogOut, Settings } from "lucide-react"; // Đã xóa Menu vì không dùng
 import { getToken, clearToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 
@@ -14,21 +14,21 @@ export default function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Thêm state để quản lý tìm kiếm
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     
-    // Kiểm tra thông tin người dùng khi component mount
     const fetchUser = async () => {
       const token = getToken();
       if (token) {
         try {
-          // Gọi API Me đã có trong auth.router.js
           const res = await apiFetch<{ ok: boolean; user: any }>("/api/v1/auth/me");
           if (res.ok) setUser(res.user);
         } catch (err) {
-          console.error("Lỗi xác thực:", err);
           clearToken();
           setUser(null);
         }
@@ -37,7 +37,7 @@ export default function SiteHeader() {
 
     fetchUser();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [pathname]); // Cập nhật lại khi chuyển trang
+  }, [pathname]);
 
   const handleLogout = () => {
     clearToken();
@@ -45,6 +45,15 @@ export default function SiteHeader() {
     setIsMenuOpen(false);
     router.push("/");
     router.refresh();
+  };
+
+  // Hàm xử lý tìm kiếm khi nhấn Enter
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // Xóa nội dung sau khi tìm
+    }
   };
 
   return (
@@ -65,14 +74,24 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-5">
-          <div className="hidden sm:flex items-center bg-gray-100/50 rounded-full px-4 py-1.5 focus-within:bg-white focus-within:ring-1 focus-within:ring-blue-200 transition">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input placeholder="Tìm kiếm..." className="bg-transparent border-none text-xs ml-2 outline-none w-32 focus:w-48 transition-all" />
-          </div>
+          {/* THANH TÌM KIẾM ĐÃ ĐƯỢC KÍCH HOẠT */}
+          <form 
+            onSubmit={handleSearch}
+            className="hidden sm:flex items-center bg-gray-100/50 rounded-full px-4 py-1.5 focus-within:bg-white focus-within:ring-1 focus-within:ring-blue-200 transition"
+          >
+            <button type="submit">
+              <Search className="w-4 h-4 text-gray-400 hover:text-blue-500" />
+            </button>
+            <input 
+              placeholder="Tìm kiếm..." 
+              className="bg-transparent border-none text-xs ml-2 outline-none w-32 focus:w-48 transition-all text-black" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
           
           <div className="flex items-center gap-4 relative">
             {user ? (
-              /* HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP */
               <div className="relative">
                 <button 
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -82,7 +101,6 @@ export default function SiteHeader() {
                   <span className="text-xs font-bold hidden md:block">{user.name}</span>
                 </button>
 
-                {/* BẢNG THÔNG TIN (DROPDOWN) */}
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-gray-50">
@@ -111,7 +129,6 @@ export default function SiteHeader() {
                 )}
               </div>
             ) : (
-              /* HIỂN THỊ KHI CHƯA ĐĂNG NHẬP */
               <Link href="/login" className="hover:text-blue-500 transition-colors">
                 <User className="w-5 h-5" />
               </Link>

@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { requestForgotPass, resetPassword } from "@/services/auth";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "next/link"; // Xóa useRouter vì không dùng
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1);
@@ -12,27 +11,30 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
 
-  const onSendEmail = async (e: any) => {
+  // Định nghĩa kiểu React.FormEvent thay cho any
+  const onSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await requestForgotPass(email);
       setStep(2);
       setMsg({ type: "success", text: "Mã OTP đã được gửi về email của bạn." });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Có lỗi xảy ra";
+      setMsg({ type: "error", text: errorMsg });
     } finally { setLoading(false); }
   };
 
-  const onReset = async (e: any) => {
+  const onReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await resetPassword({ email, otp, newPassword });
       setMsg({ type: "success", text: "Đổi mật khẩu thành công! Đang chuyển hướng..." });
       setTimeout(() => window.location.href = "/login", 2000);
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Mã OTP không đúng";
+      setMsg({ type: "error", text: errorMsg });
     } finally { setLoading(false); }
   };
 

@@ -1,22 +1,32 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
-import { User, Package, ShieldCheck, LogOut } from "lucide-react";
-import { clearToken } from "@/lib/auth";
-import { useRouter } from "next/navigation";
+import { User as UserIcon, Package, ShieldCheck } from "lucide-react"; // Đã đổi tên User thành UserIcon và xóa LogOut không dùng
+import { useRouter } from "next/navigation"; // Đã xóa clearToken không dùng
+
+// Định nghĩa interface để loại bỏ lỗi 'any'
+interface UserProfile {
+  name: string;
+  email: string;
+}
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserProfile | null>(null); // Sử dụng interface UserProfile thay cho any
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await apiFetch<{ ok: boolean; user: any }>("/api/v1/auth/me");
-        if (res.ok) setUser(res.user);
-        else router.push("/login");
-      } catch (err) {
+        const res = await apiFetch<{ ok: boolean; user: UserProfile }>("/api/v1/auth/me");
+        if (res.ok) {
+          setUser(res.user);
+        } else {
+          router.push("/login");
+        }
+      } catch {
+        // Đã xóa biến 'err' không sử dụng để tránh cảnh báo ESLint
         router.push("/login");
       } finally {
         setLoading(false);
@@ -25,7 +35,9 @@ export default function ProfilePage() {
     loadProfile();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+  }
 
   return (
     <main className="min-h-screen pt-24 pb-12 bg-[#fbfbfd]">
@@ -38,7 +50,7 @@ export default function ProfilePage() {
             <div className="glass p-6 rounded-3xl border border-white/20">
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <User className="w-10 h-10 text-blue-500" />
+                  <UserIcon className="w-10 h-10 text-blue-500" />
                 </div>
                 <h2 className="font-bold text-lg">{user?.name}</h2>
                 <p className="text-sm text-gray-500">{user?.email}</p>
@@ -55,7 +67,10 @@ export default function ProfilePage() {
                 <h3 className="font-bold">Đơn hàng gần đây</h3>
               </div>
               <p className="text-sm text-gray-500">Bạn chưa có đơn hàng nào.</p>
-              <button onClick={() => router.push('/shop')} className="mt-4 text-sm font-bold text-blue-600 hover:underline">
+              <button 
+                onClick={() => router.push('/shop')} 
+                className="mt-4 text-sm font-bold text-blue-600 hover:underline"
+              >
                 Tiếp tục mua sắm →
               </button>
             </div>

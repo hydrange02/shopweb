@@ -6,6 +6,13 @@ export type RegisterOutput = { ok: boolean; user: { id?: string; name: string; e
 export type LoginInput = { email: string; password: string };
 export type LoginOutput = { ok: boolean; token: string; user: { id: string; name: string; email: string; role?: string } };
 
+// Định nghĩa interface mới ở đây
+export interface ResetPasswordInput {
+  email: string;
+  otp: string;
+  newPassword?: string;
+}
+
 export function register(input: RegisterInput) {
   return apiFetch<RegisterOutput>("/api/v1/auth/register", {
     method: "POST",
@@ -27,7 +34,8 @@ export function requestForgotPass(email: string) {
   });
 }
 
-export function resetPassword(data: any) {
+// Thay đổi kiểu data từ any thành ResetPasswordInput
+export function resetPassword(data: ResetPasswordInput) {
   return apiFetch("/api/v1/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(data),

@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import SiteHeader from "./components/SiteHeader";
 import Providers from "./providers";
+import MainLayoutWrapper from "./components/MainLayoutWrapper"; // Import file vừa tạo
 
 export const metadata: Metadata = {
   title: "Shoply",
@@ -14,7 +15,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-white text-gray-900">
         <Providers>
           <SiteHeader />
-          <div className="container mx-auto max-w-6xl px-4 py-6">{children}</div>
+          
+          <MainLayoutWrapper>
+            {children}
+          </MainLayoutWrapper>
+
         </Providers>
       </body>
     </html>

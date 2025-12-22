@@ -2,14 +2,13 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
+      { protocol: "https", hostname: "i.imgur.com" },
+      { protocol: "https", hostname: "fakestoreapi.com" },
+      { protocol: "https", hostname: "dummyjson.com" },
+      { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "images.unsplash.com" }, // 🔥 QUAN TRỌNG: Thêm dòng này
     ],
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

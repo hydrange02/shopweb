@@ -27,7 +27,14 @@ export default function LoginPage() {
       const res = await login(values);
       if (res.token) {
         setToken(res.token);
-        router.push("/");
+        
+        // 🛠 SỬA ĐỔI: Phân luồng chuyển hướng dựa trên Role
+        if (res.user?.role === "admin") {
+          router.push("/admin"); // Admin vào Dashboard
+        } else {
+          router.push("/"); // User thường vào Trang chủ mua sắm
+        }
+        
         router.refresh();
       }
     } catch (err: any) {
@@ -65,7 +72,6 @@ export default function LoginPage() {
             />
             {errors.password && <p className="text-[11px] text-red-500 mt-1.5 ml-1">{errors.password.message}</p>}
             
-            {/* BỔ SUNG: Nút Quên mật khẩu */}
             <div className="flex justify-end mt-2">
               <Link 
                 href="/forgot-password" 

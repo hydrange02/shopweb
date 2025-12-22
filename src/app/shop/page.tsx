@@ -1,9 +1,10 @@
+// src/app/shop/page.tsx
 "use client";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useMemo, Suspense } from "react";
 import ProductCard from "@/app/components/ProductCard";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
-import { Search, ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/app/lib/cn";
 
 const LIMIT = 12;
@@ -16,9 +17,6 @@ function ShopContent() {
 
   const pageParam = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
   const qParam = searchParams.get("q") || "";
-  const [qInput, setQInput] = useState(qParam);
-
-  useEffect(() => setQInput(qParam), [qParam]);
 
   const queryArgs = useMemo(() => ({ 
     page: pageParam, 
@@ -26,7 +24,7 @@ function ShopContent() {
     q: qParam || undefined 
   }), [pageParam, qParam]);
   
-  const { data, isLoading, isError, error } = useProductsQuery(queryArgs);
+  const { data, isLoading, isError } = useProductsQuery(queryArgs);
 
   function setUrl(next: { page?: number; q?: string | null }) {
     const sp = new URLSearchParams(searchParams.toString());
@@ -41,38 +39,17 @@ function ShopContent() {
 
   return (
     <div className="flex flex-col w-full">
-      {/* 1. HEADER & SEARCH BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Cửa hàng</h1>
-        
-        <form
-          className="relative w-full md:w-96"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setUrl({ q: qInput });
-          }}
-        >
-          <input
-            value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
-            placeholder="Tìm kiếm sản phẩm thời trang..."
-            className="w-full h-11 pl-4 pr-12 rounded-full border-none bg-gray-100 text-sm focus:ring-2 focus:ring-blue-400 transition-all shadow-sm"
-          />
-          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600">
-            <Search className="w-5 h-5" />
-          </button>
-        </form>
       </div>
 
-      {/* 2. HORIZONTAL FILTER BAR (GIỐNG SHOPEE) */}
       <div className="sticky top-16 z-30 bg-white/80 backdrop-blur-md py-4 mb-8 border-b border-gray-100">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 pr-4 border-r border-gray-200">
             <Filter className="w-4 h-4 text-gray-400" />
             <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Lọc theo:</span>
           </div>
-
-          {/* Category Chips */}
+          
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
             {CATEGORIES.map((cat) => (
               <button 
@@ -90,14 +67,10 @@ function ShopContent() {
             ))}
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="ml-auto flex items-center gap-2">
+           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-gray-400 hidden sm:block">Sắp xếp:</span>
             <div className="relative">
-              <select 
-                className="appearance-none bg-gray-50 pl-4 pr-10 py-2 rounded-full text-xs font-bold border-none focus:ring-1 focus:ring-black cursor-pointer uppercase tracking-tighter"
-                onChange={(e) => {/* Logic sort bổ sung tại đây */}}
-              >
+              <select className="appearance-none bg-gray-50 pl-4 pr-10 py-2 rounded-full text-xs font-bold border-none focus:ring-1 focus:ring-black cursor-pointer uppercase tracking-tighter">
                 <option>Mới nhất</option>
                 <option>Giá thấp đến cao</option>
                 <option>Giá cao đến thấp</option>
@@ -108,9 +81,8 @@ function ShopContent() {
         </div>
       </div>
 
-      {/* 3. PRODUCT GRID */}
       <div className="min-h-[400px]">
-        {isLoading ? (
+         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-gray-100 rounded-3xl" />
@@ -119,7 +91,6 @@ function ShopContent() {
         ) : isError ? (
           <div className="py-20 text-center text-red-500 bg-red-50 rounded-3xl">
             <p className="font-medium">Không thể kết nối với máy chủ</p>
-            <p className="text-xs mt-1">{(error as Error)?.message}</p>
           </div>
         ) : data && data.data.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
@@ -129,21 +100,15 @@ function ShopContent() {
           </div>
         ) : (
           <div className="py-32 text-center">
-            <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-300" />
-            </div>
-            <p className="text-gray-500 font-medium">Chúng mình không tìm thấy sản phẩm này...</p>
-            <button 
-              onClick={() => setUrl({ q: "" })}
-              className="mt-4 text-blue-600 text-sm font-bold hover:underline"
-            >
-              Xem tất cả sản phẩm
+            <p className="text-gray-500 font-medium">Không tìm thấy sản phẩm...</p>
+            <button onClick={() => setUrl({ q: "" })} className="mt-4 text-blue-600 text-sm font-bold hover:underline">
+              Xem tất cả
             </button>
           </div>
         )}
       </div>
 
-      {/* 4. PAGINATION */}
+      {/* PHẦN PHÂN TRANG */}
       {data && data.total > LIMIT && (
         <div className="mt-20 flex items-center justify-center gap-6 border-t pt-10">
           <button
@@ -161,7 +126,7 @@ function ShopContent() {
           <button
             className="group flex items-center gap-2 h-12 px-8 rounded-full border border-gray-200 text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-black hover:text-white disabled:opacity-20"
             onClick={() => setUrl({ page: data.page + 1 })}
-            disabled={!data.hasNext}
+            disabled={!data.hasNext} // Nút này sẽ sáng lên nhờ biến hasNext từ backend
           >
             Tiếp theo
           </button>
@@ -174,7 +139,7 @@ function ShopContent() {
 export default function ShopPage() {
   return (
     <main className="py-12">
-      <Suspense fallback={<div className="py-20 text-center text-xs font-bold uppercase tracking-widest text-gray-400">Đang tải cửa hàng Hydrange...</div>}>
+      <Suspense fallback={<div className="py-20 text-center text-xs font-bold uppercase tracking-widest text-gray-400">Đang tải cửa hàng...</div>}>
         <ShopContent />
       </Suspense>
     </main>

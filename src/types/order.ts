@@ -20,6 +20,7 @@ export type Order = {
   customerAddress?: string;
   paymentMethod?: PaymentMethod;
   note?: string;
-  status?: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
+  // 🔥 SỬA: Đồng bộ trạng thái với Backend Controller và Admin Page
+  status?: "pending" | "paid" | "shipping" | "completed" | "canceled";
   createdAt?: string;
 };

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/app/lib/cn";
 import CartIndicator from "@/app/components/CartIndicator";
-import { Search, User, LogOut, Settings } from "lucide-react"; // Đã xóa Menu vì không dùng
+import { Search, User, LogOut, Settings } from "lucide-react";
 import { getToken, clearToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 
@@ -14,11 +14,14 @@ export default function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Thêm state để quản lý tìm kiếm
   const [searchQuery, setSearchQuery] = useState("");
 
+  // 1. CHUYỂN HOOKS LÊN TRÊN CÙNG (Trước khi return bất cứ thứ gì)
   useEffect(() => {
+    // Nếu là admin thì không cần chạy logic fetch user hay scroll làm gì cho nặng
+    // Tuy nhiên, để tuân thủ Rules of Hooks, useEffect vẫn phải được khai báo.
+    // Ta có thể check điều kiện bên trong hook nếu muốn tối ưu, nhưng ở đây cứ để chạy cũng không sao.
+    
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     
@@ -47,14 +50,19 @@ export default function SiteHeader() {
     router.refresh();
   };
 
-  // Hàm xử lý tìm kiếm khi nhấn Enter
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); // Xóa nội dung sau khi tìm
+      setSearchQuery(""); 
     }
   };
+
+  // 2. DI CHUYỂN LOGIC CHECK ADMIN XUỐNG DƯỚI CÙNG (Sau khi tất cả hooks đã được gọi)
+  // 🔥 LOGIC MỚI: Nếu đang ở trang Admin, ẩn hoàn toàn Header này
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header className={cn(
@@ -74,7 +82,6 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-5">
-          {/* THANH TÌM KIẾM ĐÃ ĐƯỢC KÍCH HOẠT */}
           <form 
             onSubmit={handleSearch}
             className="hidden sm:flex items-center bg-gray-100/50 rounded-full px-4 py-1.5 focus-within:bg-white focus-within:ring-1 focus-within:ring-blue-200 transition"

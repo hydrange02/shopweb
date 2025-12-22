@@ -13,7 +13,7 @@ import {
   Menu 
 } from "lucide-react";
 import { cn } from "@/app/lib/cn";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react"; // 🔥 Thêm Suspense
 
 const MENU = [
   { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
@@ -21,10 +21,11 @@ const MENU = [
   { label: "Đơn hàng", href: "/admin/orders", icon: Package },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+// 1. Tách logic chính ra thành một component riêng (AdminLayoutInner)
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // 🔥 Hook này gây lỗi nếu không có Suspense
   const [searchVal, setSearchVal] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -56,11 +57,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
       
-      {/* --- SIDEBAR (MENU TRÁI) --- */}
-      {/* 🔥 SỬA: Width 20% (w-[20%]) cho desktop, min-width 240px để không bị vỡ layout khi màn hình nhỏ */}
+      {/* --- SIDEBAR --- */}
       <aside className={cn(
         "fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out",
-        "w-[80%] md:w-[20%] min-w-[240px]", // Mobile: 80%, Desktop: 20% (nhưng tối thiểu 240px)
+        "w-[80%] md:w-[20%] min-w-[240px]",
         "md:translate-x-0", 
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -105,8 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT (NỘI DUNG PHẢI) --- */}
-      {/* 🔥 SỬA: Margin left 20% (md:ml-[20%]) để khớp với Sidebar */}
+      {/* --- MAIN CONTENT --- */}
       <div className={cn(
         "flex-1 flex flex-col min-h-screen transition-all duration-300",
         "md:ml-[20%] md:w-[80%] ml-0 w-full mx-6"
@@ -146,7 +145,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        {/* 🔥 SỬA: Padding cực nhỏ (p-1 md:p-2) để tận dụng tối đa diện tích */}
         <main className="p-2 md:p-3 flex-1 bg-[#f8f9fa]">
           <div className="w-full h-full">
             {children}
@@ -154,5 +152,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
     </div>
+  );
+}
+
+// 2. Component chính chỉ làm nhiệm vụ bọc Suspense
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Đang tải trang quản trị...</div>}>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </Suspense>
   );
 }

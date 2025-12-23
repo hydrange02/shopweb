@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createProduct, updateProduct } from "@/services/products";
 import type { Product } from "@/types/product";
 import { Save, ArrowLeft, Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query"; // Import thêm
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast"; // 🔥 Import Toast
 
 interface ProductFormProps {
   initialData?: Product;
@@ -13,10 +14,9 @@ interface ProductFormProps {
 
 export default function ProductForm({ initialData }: ProductFormProps) {
   const router = useRouter();
-  const queryClient = useQueryClient(); // Init QueryClient
+  const queryClient = useQueryClient();
   const isEdit = !!initialData;
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -31,10 +31,8 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    setError(null);
     
     try {
-      // Logic xử lý ảnh: Nếu chuỗi rỗng thì gửi mảng rỗng
       const imageList = formData.images.trim() ? [formData.images.trim()] : [];
 
       const payload = {
@@ -44,22 +42,20 @@ export default function ProductForm({ initialData }: ProductFormProps) {
 
       if (isEdit && initialData?._id) {
         await updateProduct(initialData._id, payload);
-        alert("Cập nhật thành công!");
+        toast.success("Cập nhật sản phẩm thành công!"); // 🔥 Thông báo đẹp
       } else {
         await createProduct(payload);
-        alert("Thêm mới thành công!");
+        toast.success("Thêm sản phẩm mới thành công!"); // 🔥 Thông báo đẹp
       }
       
-      // 🔥 QUAN TRỌNG: Xóa cache cũ để danh sách cập nhật ngay lập tức
       await queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      // Nếu đang sửa, invalidate cả cache chi tiết sản phẩm đó
       if (initialData?._id) {
          await queryClient.invalidateQueries({ queryKey: ["product", initialData._id] });
       }
 
       router.push("/admin/products"); 
     } catch (err: any) {
-      setError(err.message || "Có lỗi xảy ra, vui lòng thử lại.");
+      toast.error(err.message || "Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -73,12 +69,6 @@ export default function ProductForm({ initialData }: ProductFormProps) {
         </button>
         <h1 className="text-2xl font-bold">{isEdit ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}</h1>
       </div>
-
-      {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
-          Lỗi: {error}
-        </div>
-      )}
 
       <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm grid grid-cols-2 gap-6">
         <div className="col-span-2">

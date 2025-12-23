@@ -41,3 +41,15 @@ export function resetPassword(data: ResetPasswordInput) {
     body: JSON.stringify(data),
   });
 }
+
+export interface ChangePasswordInput {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export function changePassword(data: ChangePasswordInput) {
+  return apiFetch<{ ok: boolean; message: string }>("/api/v1/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+} 

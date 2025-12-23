@@ -5,8 +5,9 @@ import { apiFetch } from "@/lib/api";
 import { deleteProduct } from "@/services/products";
 import { formatVND } from "@/app/lib/format";
 import Image from "next/image";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import { Trash2, Edit, Plus } from "lucide-react";
+import toast from "react-hot-toast"; // 🔥 Import Toast
 import type { Product } from "@/types/product";
 
 type AdminProductsResponse = {
@@ -28,15 +29,17 @@ export default function AdminProductsPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onSuccess: () => {
-      alert("Đã xoá sản phẩm thành công!");
+      // 🔥 Thông báo đẹp
+      toast.success("Đã xoá sản phẩm thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
     onError: (err: any) => {
-      alert(err.message || "Lỗi khi xoá");
+      toast.error(err.message || "Lỗi khi xoá sản phẩm");
     }
   });
 
   const handleDelete = (id: string) => {
+    // Vẫn dùng confirm native cho nhanh, nhưng kết quả sẽ dùng toast
     if (confirm("Bạn có chắc chắn muốn xoá sản phẩm này?")) {
       deleteMutation.mutate(id);
     }
@@ -51,7 +54,6 @@ export default function AdminProductsPage() {
           <h1 className="text-2xl font-bold">Sản phẩm</h1>
           <p className="text-gray-500 text-sm">Quản lý kho hàng của bạn</p>
         </div>
-        {/* Cập nhật Link Thêm mới */}
         <Link 
           href="/admin/products/new"
           className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg"
@@ -96,7 +98,6 @@ export default function AdminProductsPage() {
                 <td className="px-6 py-4 capitalize text-gray-500">{p.category || "—"}</td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {/* Cập nhật Link Sửa */}
                     <Link 
                       href={`/admin/products/${p._id}`}
                       className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition" 

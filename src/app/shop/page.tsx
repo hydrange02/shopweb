@@ -6,6 +6,7 @@ import ProductCard from "@/app/components/ProductCard";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
 import { ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/app/lib/cn";
+import PageTransition from "@/app/components/PageTransition"; // 🔥 1. Import Component
 
 const LIMIT = 12;
 const CATEGORIES = ["Tất cả", "Áo", "Quần", "Váy", "Phụ kiện"];
@@ -38,7 +39,8 @@ function ShopContent() {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    // 🔥 2. Thay div thường bằng PageTransition để có hiệu ứng
+    <PageTransition className="flex flex-col w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Cửa hàng</h1>
       </div>
@@ -126,13 +128,13 @@ function ShopContent() {
           <button
             className="group flex items-center gap-2 h-12 px-8 rounded-full border border-gray-200 text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-black hover:text-white disabled:opacity-20"
             onClick={() => setUrl({ page: data.page + 1 })}
-            disabled={!data.hasNext} // Nút này sẽ sáng lên nhờ biến hasNext từ backend
+            disabled={!data.hasNext} 
           >
             Tiếp theo
           </button>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }
 
@@ -144,4 +146,4 @@ export default function ShopPage() {
       </Suspense>
     </main>
   );
-}
+} 

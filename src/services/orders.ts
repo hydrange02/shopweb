@@ -1,3 +1,4 @@
+// src/services/orders.ts
 import { apiFetch } from "@/lib/api";
 import type { Order } from "@/types/order";
 
@@ -7,10 +8,9 @@ export type CreateOrderInput = {
   customerAddress: string;
   paymentMethod: "cod" | "banking" | "momo";
   note?: string;
-  items: { productId: string; quantity: number }[];
+  items: { productId: string; quantity: number; selectedSize?: string }[];
 };
 
-// Kiểu dữ liệu trả về cho danh sách đơn hàng (phân trang)
 export type OrdersResponse = {
   ok: boolean;
   data: Order[];
@@ -27,12 +27,11 @@ export function createOrder(input: CreateOrderInput) {
   });
 }
 
-// 🔥 MỚI: Hàm lấy danh sách đơn hàng cho Admin
 export function getAllOrders(page = 1, limit = 20, search = "") {
   const query = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-    q: search // Truyền q vào query string
+    q: search
   });
   return apiFetch<OrdersResponse>(`/api/v1/orders?${query.toString()}`);
 }
@@ -41,5 +40,18 @@ export function updateOrderStatus(id: string, status: string) {
   return apiFetch<{ ok: boolean; order: Order }>(`/api/v1/orders/${id}/status`, {
     method: "PUT",
     body: JSON.stringify({ status }),
+  });
+}
+
+// 🔥 MỚI: Hàm xóa đơn hàng
+export function deleteOrder(id: string) {
+  return apiFetch<{ ok: boolean; message: string }>(`/api/v1/orders/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function cancelOrder(id: string) {
+  return apiFetch<{ ok: boolean; message: string }>(`/api/v1/orders/${id}/cancel`, {
+    method: "PUT",
   });
 }

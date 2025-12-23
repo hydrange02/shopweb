@@ -5,6 +5,7 @@ import { useCart } from "@/features/cart/cart-context";
 import type { Product } from "@/types/product";
 import { productToCartItem } from "@/types/cart";
 import { cn } from "@/app/lib/cn";
+import toast from "react-hot-toast"; // 🔥 Import Toast
 
 export default function AddToCartButton({
   product,
@@ -22,7 +23,6 @@ export default function AddToCartButton({
   const { dispatch } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  // 🔥 Lấy danh sách size từ variants và loại bỏ trùng lặp
   const availableSizes = useMemo(() => {
     if (!showOptions || !product.variants) return [];
     return Array.from(
@@ -35,7 +35,7 @@ export default function AddToCartButton({
     e.stopPropagation();
 
     if (showOptions && availableSizes.length > 0 && !selectedSize) {
-      alert("Vui lòng chọn kích thước trước khi thêm vào giỏ hàng!");
+      toast.error("Vui lòng chọn kích thước trước khi thêm vào giỏ hàng!"); // 🔥 Thay alert bằng toast
       return;
     }
 
@@ -45,6 +45,7 @@ export default function AddToCartButton({
     };
 
     dispatch({ type: "ADD", payload: cartItem });
+    toast.success("Đã thêm vào giỏ hàng!"); // 🔥 Thông báo thành công
   };
 
   const hasVariants = availableSizes.length > 0;

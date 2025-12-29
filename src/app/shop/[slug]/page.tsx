@@ -18,9 +18,9 @@ export async function generateMetadata({
   try {
     const product = await getProductBySlug(slug);
     if (!product) return { title: "Không tìm thấy sản phẩm" };
-    return { title: `${product.title} — Hydrange` };
+    return { title: `${product.title} — hydrange` };
   } catch (error) {
-    return { title: "Sản phẩm — Hydrange" };
+    return { title: "Sản phẩm — hydrange" };
   }
 }
 
@@ -113,7 +113,7 @@ export default async function ProductDetailPage({
           <div className="mb-8 border-b border-gray-100 pb-8">
             <div className="flex items-center justify-between mb-3">
                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600 block">
-                 {product.brand || "Hydrange Exclusive"}
+                 {product.brand || "hydrange Exclusive"}
                </span>
                <div className="flex items-center gap-1 text-amber-500">
                   <span className="text-xs font-bold">{product.rating || 5.0}</span>

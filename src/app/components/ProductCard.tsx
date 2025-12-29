@@ -40,7 +40,7 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Content */}
       <div className="p-4 flex flex-col gap-1">
         <div className="flex justify-between items-start">
-          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-widest">{brand || "Shoply Basic"}</p>
+          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-widest">{brand || "hydrange Basic"}</p>
           <div className="flex items-center gap-0.5 text-amber-400">
             <Star className="w-3 h-3 fill-current" />
             <span className="text-[11px] font-bold text-gray-600">{rating || 5}</span>

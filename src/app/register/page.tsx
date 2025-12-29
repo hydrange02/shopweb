@@ -77,7 +77,7 @@ export default function RegisterPage() {
           </motion.h1>
           <p className="text-gray-500 mt-2 text-sm">
             {step === 1 
-              ? "Tham gia cộng đồng Hydrange ngay hôm nay" 
+              ? "Tham gia cộng đồng hydrange ngay hôm nay" 
               : `Chúng tôi đã gửi mã xác nhận đến ${getValues("email")}`}
           </p>
         </div>

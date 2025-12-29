@@ -1,5 +1,5 @@
 // src/lib/auth.ts
-export const TOKEN_KEY = "shoply:token";
+export const TOKEN_KEY = "hydrange:token";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;

@@ -5,7 +5,7 @@ import Providers from "./providers";
 import MainLayoutWrapper from "./components/MainLayoutWrapper"; // Import file vừa tạo
 
 export const metadata: Metadata = {
-  title: "Shoply",
+  title: "hydrange",
   description: "Catalog, giỏ hàng, đơn hàng, admin CRUD",
 };
 

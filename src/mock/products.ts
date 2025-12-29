@@ -2,7 +2,7 @@
 import type { Product } from "@/types/product";
 
 const CATEGORIES = ["Áo", "Quần", "Váy", "Phụ kiện"];
-const BRANDS = ["Hydrange Classic", "Urban Style", "Silk & Cotton"];
+const BRANDS = ["hydrange Classic", "Urban Style", "Silk & Cotton"];
 
 export const PRODUCTS: Product[] = Array.from({ length: 24 }, (_, i) => {
   const n = i + 1;

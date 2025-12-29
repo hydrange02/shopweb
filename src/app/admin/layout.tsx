@@ -66,7 +66,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       )}>
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
           <Link href="/admin" className="font-bold text-xl tracking-widest flex items-center gap-1">
-            SHOPLY<span className="text-blue-600 text-2xl">.</span>
+            hydrange<span className="text-blue-600 text-2xl">.</span>
           </Link>
         </div>
 

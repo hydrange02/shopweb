@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Shop — Shoply" };
+export const metadata: Metadata = { title: "Shop — hydrange" };
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (

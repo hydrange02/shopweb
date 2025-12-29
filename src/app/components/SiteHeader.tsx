@@ -72,7 +72,7 @@ export default function SiteHeader() {
       <div className="container mx-auto max-w-6xl px-6 h-full flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="text-xl font-bold tracking-[0.1em] hover:opacity-70 transition uppercase">
-            HYDRANGE<span className="text-blue-400">.</span>
+            hydrange<span className="text-blue-400">.</span>
           </Link>
           
           <nav className="hidden md:flex gap-6">

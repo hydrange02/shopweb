@@ -60,7 +60,7 @@ export default function LoginPage() {
             transition={{ delay: 0.3 }}
             className="text-gray-500 mt-2 text-sm"
           >
-            Đăng nhập để tiếp tục trải nghiệm Hydrange
+            Đăng nhập để tiếp tục trải nghiệm hydrange
           </motion.p>
         </div>
 

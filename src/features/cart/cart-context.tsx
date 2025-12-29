@@ -5,7 +5,7 @@ import type { CartAction, CartState } from "@/types/cart";
 import { getToken } from "@/lib/auth"; 
 import { apiFetch } from "@/lib/api";
 
-const LS_KEY = "shoply:cart";
+const LS_KEY = "hydrange:cart";
 
 function reducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {

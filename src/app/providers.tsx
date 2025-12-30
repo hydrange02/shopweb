@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
-import CartProvider from "@/features/cart/cart-context";
+import {CartProvider} from "@/features/cart/cart-context";
 // 1. Import Toaster
 import { Toaster } from "react-hot-toast";
 

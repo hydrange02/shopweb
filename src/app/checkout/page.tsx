@@ -6,21 +6,14 @@ import { calcTotals } from "@/lib/checkout";
 import { createOrder } from "@/services/orders";
 import { apiFetch } from "@/lib/api";
 import { formatVND } from "@/app/lib/format";
-import { useCart } from "@/features/cart/cart-context";
+import { useCart } from "@/features/cart/cart-context"; // Import Context mới
 import Image from "next/image";
-import {
-  CheckCircle2,
-  CreditCard,
-  Loader2,
-  ArrowLeft,
-  AlertCircle,
-} from "lucide-react";
+import { CheckCircle2, CreditCard, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import type { Product } from "@/types/product";
 import type { Order } from "@/types/order";
 
 type PM = "cod" | "banking" | "momo";
 
-// Định nghĩa interface để loại bỏ lỗi 'any'
 interface DbProductItem {
   product: Product;
   quantity: number;
@@ -30,7 +23,9 @@ interface DbProductItem {
 function CheckoutContent() {
   const sp = useSearchParams();
   const router = useRouter();
-  const { dispatch } = useCart();
+  
+  // 🔥 FIX: Thay dispatch bằng clearCart
+  const { clearCart } = useCart(); 
 
   const itemsParam = sp.get("items") || "";
 
@@ -47,7 +42,6 @@ function CheckoutContent() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string }>({});
 
-  // 1. Tải dữ liệu và tách chuỗi slug:qty:size từ URL
   useEffect(() => {
     const loadRealData = async () => {
       const pairs = itemsParam.split(",").filter(Boolean);
@@ -59,11 +53,9 @@ function CheckoutContent() {
       try {
         const data = await Promise.all(
           pairs.map(async (pair) => {
-            const [slug, qty, size] = pair.split(":");
+            const [slug, qty, size] = pair.split(":").map(s => decodeURIComponent(s));
             try {
-              const res = await apiFetch<{ ok: boolean; product: Product }>(
-                `/api/v1/products/slug/${slug}`
-              );
+              const res = await apiFetch<{ ok: boolean; product: Product }>(`/api/v1/products/slug/${slug}`);
               return {
                 product: res.product,
                 quantity: parseInt(qty || "1", 10),
@@ -74,10 +66,7 @@ function CheckoutContent() {
             }
           })
         );
-        // Lọc bỏ các sản phẩm null và định nghĩa kiểu dữ liệu chuẩn
-        setDbProducts(
-          data.filter((item): item is DbProductItem => item !== null)
-        );
+        setDbProducts(data.filter((item): item is DbProductItem => item !== null));
       } catch {
         setError("Không thể tải thông tin sản phẩm.");
       } finally {
@@ -87,20 +76,16 @@ function CheckoutContent() {
     loadRealData();
   }, [itemsParam]);
 
-  // 2. Tính toán tổng tiền
   const totals = useMemo(() => {
     const itemsForCalc = dbProducts.map((item) => ({
       price: item.product.discountPercent
-        ? Math.round(
-            item.product.price * (1 - item.product.discountPercent / 100)
-          )
+        ? Math.round(item.product.price * (1 - item.product.discountPercent / 100))
         : item.product.price,
       quantity: item.quantity,
     }));
     return calcTotals(itemsForCalc, addr);
   }, [dbProducts, addr]);
 
-  // 3. Xử lý đặt hàng
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -127,37 +112,19 @@ function CheckoutContent() {
         items: dbProducts.map((x) => ({
           productId: x.product._id,
           quantity: x.quantity,
-          selectedSize: x.selectedSize, // Gửi size lên backend
+          selectedSize: x.selectedSize,
         })),
       };
 
       const j = await createOrder(payload);
       setResult(j.order);
 
-      const newOrder = j.order;
-
-      const existingGuestOrders = JSON.parse(
-        localStorage.getItem("guest_orders") || "[]"
-      );
-      if (typeof window !== "undefined") {
-        const existingGuestOrders = JSON.parse(
-          localStorage.getItem("guest_orders") || "[]"
-        );
-        if (!existingGuestOrders.includes(newOrder._id)) {
-          existingGuestOrders.push(newOrder._id);
-          localStorage.setItem(
-            "guest_orders",
-            JSON.stringify(existingGuestOrders)
-          );
-        }
-      }
-
-      dispatch({ type: "CLEAR" });
+      // 🔥 FIX: Gọi hàm clearCart() thay vì dispatch
+      clearCart();
+      
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: unknown) {
-      // Sửa lỗi 'any' trong catch block
-      const message =
-        err instanceof Error ? err.message : "Có lỗi xảy ra khi đặt hàng.";
+      const message = err instanceof Error ? err.message : "Có lỗi xảy ra khi đặt hàng.";
       setError(message);
     } finally {
       setSubmitting(false);
@@ -178,217 +145,80 @@ function CheckoutContent() {
       <div className="max-w-2xl mx-auto py-16 px-4">
         <div className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl border border-green-50 text-center">
           <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold mb-2 text-black">
-            Đặt hàng thành công!
-          </h2>
+          <h2 className="text-3xl font-bold mb-2 text-black">Đặt hàng thành công!</h2>
           <p className="text-gray-500 mb-8">
-            Mã đơn hàng:{" "}
-            <span className="font-mono font-bold text-black uppercase">
-              #{result._id.slice(-6)}
-            </span>
+            Mã đơn hàng: <span className="font-mono font-bold text-black uppercase">#{result._id.slice(-6)}</span>
           </p>
 
           <div className="text-left bg-gray-50 p-6 rounded-3xl mb-8 space-y-4 border border-gray-100 text-sm">
-            <div className="flex justify-between text-black">
-              <span className="text-gray-400">Người nhận:</span>
-              <span className="font-bold">{result.customerName}</span>
-            </div>
-            <div className="flex justify-between text-black">
-              <span className="text-gray-400">Địa chỉ:</span>
-              <span className="font-bold text-right ml-4">
-                {result.customerAddress}
-              </span>
-            </div>
-            <div className="flex justify-between border-t pt-4 font-bold text-lg text-black">
-              <span>Tổng thanh toán:</span>
-              <span className="text-blue-600">{formatVND(result.total)}</span>
-            </div>
+             <div className="flex justify-between text-black"><span className="text-gray-400">Người nhận:</span><span className="font-bold">{result.customerName}</span></div>
+             <div className="flex justify-between border-t pt-4 font-bold text-lg text-black"><span>Tổng thanh toán:</span><span className="text-blue-600">{formatVND(result.total)}</span></div>
           </div>
 
-          {pm !== "cod" && (
-            <div className="bg-blue-50 p-6 rounded-3xl mb-8 border border-blue-100 text-left">
-              <div className="flex items-center gap-3 mb-3 text-blue-700">
-                <CreditCard className="w-5 h-5" />
-                <span className="font-bold uppercase text-xs tracking-widest">
-                  Hướng dẫn thanh toán
-                </span>
-              </div>
-              <p className="text-sm text-black">
-                Vui lòng chuyển khoản <b>{formatVND(result.total)}</b> vào STK{" "}
-                <b>0123456789 (MB Bank)</b> với nội dung:{" "}
-                <b>{result._id.slice(-6).toUpperCase()}</b>
-              </p>
-            </div>
-          )}
-
-          <button
-            onClick={() => router.push("/shop")}
-            className="w-full h-14 bg-black text-white rounded-2xl font-bold hover:opacity-80 transition shadow-lg"
-          >
-            Tiếp tục mua sắm
-          </button>
+          <button onClick={() => router.push("/shop")} className="w-full h-14 bg-black text-white rounded-2xl font-bold hover:opacity-80 transition shadow-lg">Tiếp tục mua sắm</button>
         </div>
       </div>
     );
   }
 
   return (
-    <section className="grid md:grid-cols-3 gap-8 py-10">
+    <section className="grid md:grid-cols-3 gap-8 py-10 container mx-auto px-4">
       <div className="md:col-span-2 space-y-8 text-black">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
+          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-4xl font-bold tracking-tighter">Thanh toán</h1>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-5">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
-              Thông tin giao hàng
-            </h3>
-            <input
-              className="w-full h-12 px-5 rounded-2xl bg-gray-50 text-black border-none outline-none"
-              placeholder="Họ tên người nhận *"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <div className="space-y-1">
-              <input
-                className={`w-full h-12 px-5 rounded-2xl bg-gray-50 text-black border-none outline-none ${
-                  fieldErrors.phone
-                    ? "ring-2 ring-red-500/50"
-                    : "focus:ring-2 focus:ring-blue-500/20"
-                }`}
-                placeholder="Số điện thoại *"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
-              {fieldErrors.phone && (
-                <p className="text-[11px] text-red-500 font-bold ml-2 italic">
-                  {fieldErrors.phone}
-                </p>
-              )}
-            </div>
-            <textarea
-              className="w-full p-5 rounded-2xl bg-gray-50 text-black border-none outline-none"
-              placeholder="Địa chỉ chi tiết *"
-              rows={3}
-              value={addr}
-              onChange={(e) => setAddr(e.target.value)}
-              required
-            />
-            <textarea
-              className="w-full p-5 rounded-2xl bg-gray-50 text-black border-none outline-none"
-              placeholder="Ghi chú đơn hàng"
-              rows={2}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Thông tin giao hàng</h3>
+            <input className="w-full h-12 px-5 rounded-2xl bg-gray-50 text-black border-none outline-none" placeholder="Họ tên người nhận *" value={name} onChange={(e) => setName(e.target.value)} required />
+            <input className="w-full h-12 px-5 rounded-2xl bg-gray-50 text-black border-none outline-none" placeholder="Số điện thoại *" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            <textarea className="w-full p-5 rounded-2xl bg-gray-50 text-black border-none outline-none" placeholder="Địa chỉ chi tiết *" rows={3} value={addr} onChange={(e) => setAddr(e.target.value)} required />
+            <textarea className="w-full p-5 rounded-2xl bg-gray-50 text-black border-none outline-none" placeholder="Ghi chú đơn hàng" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
 
           <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
-              Phương thức thanh toán
-            </h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Phương thức thanh toán</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {(["cod", "banking", "momo"] as PM[]).map((m) => (
-                <label
-                  key={m}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                    pm === m
-                      ? "border-black bg-black text-white"
-                      : "border-gray-100 bg-white text-black"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    className="hidden"
-                    checked={pm === m}
-                    onChange={() => setPM(m)}
-                  />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">
-                    {m}
-                  </span>
+                <label key={m} className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${pm === m ? "border-black bg-black text-white" : "border-gray-100 bg-white text-black"}`}>
+                  <input type="radio" className="hidden" checked={pm === m} onChange={() => setPM(m)} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{m}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {error && (
-            <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" /> {error}
-            </div>
-          )}
+          {error && <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {error}</div>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full h-16 bg-black text-white rounded-[24px] font-bold shadow-xl flex items-center justify-center gap-3"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="animate-spin w-5 h-5" /> Đang xử lý...
-              </>
-            ) : (
-              "Xác nhận đặt hàng"
-            )}
+          <button type="submit" disabled={submitting} className="w-full h-16 bg-black text-white rounded-[24px] font-bold shadow-xl flex items-center justify-center gap-3">
+            {submitting ? <><Loader2 className="animate-spin w-5 h-5" /> Đang xử lý...</> : "Xác nhận đặt hàng"}
           </button>
         </form>
       </div>
 
       <aside className="space-y-6">
         <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 sticky top-24 text-black">
-          <h2 className="font-bold text-xl mb-6 flex justify-between">
-            Tóm tắt <span>{dbProducts.length} món</span>
-          </h2>
+          <h2 className="font-bold text-xl mb-6 flex justify-between">Tóm tắt <span>{dbProducts.length} món</span></h2>
           <div className="space-y-4 mb-8 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
             {dbProducts.map((it, idx) => (
               <div key={idx} className="flex gap-4">
                 <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex-shrink-0">
-                  <Image
-                    src={it.product.images?.[0] || "/placeholder.png"}
-                    alt={it.product.title}
-                    fill
-                    className="object-cover"
-                  />
+                  <Image src={it.product.images?.[0] || "/placeholder.png"} alt={it.product.title} fill className="object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate text-black">
-                    {it.product.title}
-                  </p>
-                  {/* Hiển thị số lượng và Size */}
-                  <p className="text-[11px] text-gray-400 mt-1 italic">
-                    Số lượng: {it.quantity}{" "}
-                    {it.selectedSize && ` - Size: ${it.selectedSize}`}
-                  </p>
-                  <p className="text-sm font-bold mt-1 text-gray-800">
-                    {formatVND(it.product.price * it.quantity)}
-                  </p>
+                  <p className="text-sm font-bold truncate text-black">{it.product.title}</p>
+                  <p className="text-[11px] text-gray-400 mt-1 italic">SL: {it.quantity} {it.selectedSize && ` - Size: ${it.selectedSize}`}</p>
+                  <p className="text-sm font-bold mt-1 text-gray-800">{formatVND(it.product.price * it.quantity)}</p>
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t pt-5 space-y-3">
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Tạm tính</span>
-              <span className="text-black">{formatVND(totals.subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Phí ship</span>
-              <span className="text-black">
-                {formatVND(totals.shippingFee)}
-              </span>
-            </div>
-            <div className="flex justify-between font-bold text-2xl pt-4 border-t mt-2 text-black">
-              <span>Tổng cộng</span>
-              <span className="text-blue-600">{formatVND(totals.total)}</span>
-            </div>
+            <div className="flex justify-between text-sm text-gray-500"><span>Tạm tính</span><span className="text-black">{formatVND(totals.subtotal)}</span></div>
+            <div className="flex justify-between text-sm text-gray-500"><span>Phí ship</span><span className="text-black">{formatVND(totals.shippingFee)}</span></div>
+            <div className="flex justify-between font-bold text-2xl pt-4 border-t mt-2 text-black"><span>Tổng cộng</span><span className="text-blue-600">{formatVND(totals.total)}</span></div>
           </div>
         </div>
       </aside>
@@ -398,13 +228,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="py-20 text-center text-gray-400 animate-pulse font-bold tracking-widest uppercase text-xs">
-          Đang tải dữ liệu...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="py-20 text-center">Đang tải dữ liệu...</div>}>
       <CheckoutContent />
     </Suspense>
   );

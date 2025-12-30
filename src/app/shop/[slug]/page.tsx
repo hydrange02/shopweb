@@ -8,6 +8,7 @@ import AddToCartButton from "@/features/cart/AddToCartButton";
 import ProductCard from "@/app/components/ProductCard";
 import { apiFetch } from "@/lib/api";
 import type { Product } from "@/types/product";
+import { ReviewsSection } from "@/features/reviews/ReviewsSection";
 
 export async function generateMetadata({
   params,
@@ -25,7 +26,7 @@ export async function generateMetadata({
 }
 
 /**
- * Component hiển thị 4 sản phẩm đề cử
+ * Component hiển thị các sản phẩm đề cử tương tự
  */
 async function RecommendedProducts({ category, currentSlug }: { category?: string; currentSlug: string }) {
   let recommended: Product[] = [];
@@ -88,7 +89,7 @@ export default async function ProductDetailPage({
     : originalPrice;
 
   return (
-    <main className="py-10">
+    <main className="max-w-7xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
         {/* Cột Trái: Ảnh sản phẩm */}
         <div className="sticky top-24 h-fit">
@@ -102,7 +103,7 @@ export default async function ProductDetailPage({
             />
             {hasDiscount && (
                <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                  -{product.discountPercent}%
+                 -{product.discountPercent}%
                </div>
             )}
           </div>
@@ -115,18 +116,39 @@ export default async function ProductDetailPage({
                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600 block">
                  {product.brand || "hydrange Exclusive"}
                </span>
-               <div className="flex items-center gap-1 text-amber-500">
-                  <span className="text-xs font-bold">{product.rating || 5.0}</span>
-                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+               
+               {/* ĐÁNH GIÁ ĐỘNG TỪ DATABASE */}
+               <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-1 text-amber-500">
+                    <span className="text-sm font-bold">{product.rating ? product.rating.toFixed(1) : "0.0"}</span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <svg 
+                          key={i} 
+                          className={`w-3.5 h-3.5 ${i < Math.round(product.rating || 0) ? "fill-current" : "text-gray-300 fill-current"}`} 
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                      ))}
+                    </div>
+                 </div>
+                 <span className="text-xs text-gray-400 font-medium">
+                   ({product.rating || 0} đánh giá)
+                 </span>
                </div>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4 leading-tight">{product.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4 leading-tight">
+              {product.title}
+            </h1>
             
             <div className="flex items-end gap-4 mt-6">
               <span className="text-4xl font-bold text-gray-900">{formatVND(finalPrice)}</span>
               {hasDiscount && (
-                <span className="text-xl text-gray-400 line-through font-medium mb-1.5">{formatVND(originalPrice)}</span>
+                <span className="text-xl text-gray-400 line-through font-medium mb-1.5">
+                  {formatVND(originalPrice)}
+                </span>
               )}
             </div>
           </div>
@@ -141,12 +163,11 @@ export default async function ProductDetailPage({
 
           {/* Khu vực Hành động (Action Area) */}
           <div className="mt-auto bg-gray-50/50 p-6 rounded-[24px] border border-gray-100">
-             {/* Component AddToCartButton đã được nâng cấp để hiển thị Size Selector */}
              <div className="flex flex-col gap-6">
                 <AddToCartButton
                   product={product}
                   disabled={isOutOfStock}
-                  showOptions={true} // 🔥 Kích hoạt tính năng chọn Size
+                  showOptions={true}
                   className="w-full h-14 bg-black text-white hover:bg-gray-800 rounded-2xl text-base font-bold shadow-xl transition-all"
                 />
                 
@@ -169,7 +190,11 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
+      {/* 1. Phần Sản phẩm tương tự */}
       <RecommendedProducts category={product.category} currentSlug={product.slug} />
+
+      {/* 2. Phần Đánh giá thật từ người dùng */}
+      <ReviewsSection productId={product._id} />
     </main>
   );
 }

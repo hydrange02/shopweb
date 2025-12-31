@@ -52,7 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/v1/cart", {
+      const res = await fetch("/api/v1/cart", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -90,7 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const res = await fetch("http://localhost:4000/api/v1/cart/add", {
+      const res = await fetch("/api/v1/cart/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(prev => prev.filter(item => !(item.productId === productId && item.selectedSize === selectedSize)));
 
     try {
-      await fetch("http://localhost:4000/api/v1/cart/remove", {
+      await fetch("/api/v1/cart/remove", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
